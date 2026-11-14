@@ -3,7 +3,7 @@
 # Fly.io를 쓸 때만 필요한 비밀값 (Settings → Secrets and variables → Actions) — 모두 본인이 직접 입력
 #   FLY_API_TOKEN : Fly.io 대시보드 → Account → Access Tokens 에서 만든 토큰
 #   MCP_PATH      : 비밀 경로 (예: /아무도모르는-긴-문자열/mcp)
-name: 색인갱신
+name: Update Index
 
 on:
   repository_dispatch:
