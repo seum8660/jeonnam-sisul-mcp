@@ -36,3 +36,5 @@ qa_refs: ["설계변경 가능여부", ...]   ← 본문의 #질의회신(…) �
 - `_목차.json` — 전체 목차(파일명·편·부·글자 수)
 - 색인 반영: `scripts/book_loader.py`의 `load_book()`을 `build_index.py`에서 불러 `docs`에 더한 뒤 `색인갱신.bat`
 - 책을 고친 뒤에는 새 HTML로 `split_book.py`를 다시 돌려 이 폴더를 통째로 바꿉니다.
+
+- 첫 배포: 2026-11-14
