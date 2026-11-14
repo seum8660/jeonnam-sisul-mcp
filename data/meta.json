@@ -1,0 +1,17 @@
+{
+ "built_at": "2026-11-14 14:09 KST",
+ "school_bible": "c5ed44a",
+ "boards_repaired": true,
+ "counts": {
+  "manual": 59,
+  "task": 48,
+  "stage": 7,
+  "workflow": 54,
+  "law": 39,
+  "cert": 9,
+  "board": 26,
+  "tool": 91,
+  "book": 153,
+  "qa": 15070
+ }
+}

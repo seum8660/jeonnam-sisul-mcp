@@ -1,0 +1,24 @@
+# 전남시설 MCP — Fly.io 설정 (표준품셈 MCP와 같은 도쿄 리전)
+app = "jeonnam-sisul-mcp"
+primary_region = "nrt"
+
+[build]
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "60s"
+    method = "GET"
+    path = "/"
+    timeout = "5s"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

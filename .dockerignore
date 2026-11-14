@@ -1,0 +1,9 @@
+node_modules
+.git
+.github
+book
+book_src
+scripts
+test
+_school_bible
+*.md

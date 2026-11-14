@@ -1,0 +1,19 @@
+{
+  "name": "jeonnam-sisul-mcp",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "학교시설 치트키(사이트·책·질의회신) 검색용 MCP 서버 — 전남시설 MCP",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js --http",
+    "stdio": "node src/server.js",
+    "test": "node test/smoke.mjs"
+  },
+  "engines": { "node": ">=18" },
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "express": "^5.2.1",
+    "zod": "^4.4.3"
+  }
+}

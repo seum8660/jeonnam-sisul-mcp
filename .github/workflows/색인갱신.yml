@@ -1,0 +1,136 @@
+# 전남시설 MCP — 치트키 사이트가 바뀌면 색인을 다시 만들고 Fly.io에 배포
+# 필요한 비밀값 (Settings → Secrets and variables → Actions) — 모두 본인이 직접 입력
+#   FLY_API_TOKEN : Fly.io 대시보드 → Account → Access Tokens 에서 만든 토큰
+#   MCP_PATH      : 비밀 경로 (예: /아무도모르는-긴-문자열/mcp)
+name: 색인갱신
+
+on:
+  repository_dispatch:
+    types: [cheatkey-updated]      # 치트키 저장소 MCP알림이 보내는 신호
+  schedule:
+    - cron: '17 1,9 * * *'         # 한국시간 10:17, 18:17 — 신호가 빠져도 스스로 확인
+  push:
+    branches: [main]
+    paths: ['src/**', 'book/**', 'book_src/**', 'scripts/**', 'package*.json', 'Dockerfile', 'fly.toml']
+  workflow_dispatch:
+    inputs:
+      force:
+        description: '바뀐 것이 없어도 배포'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: index-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: MCP 저장소 받기
+        uses: actions/checkout@v4
+
+      - name: 치트키 저장소 받기 (공개)
+        uses: actions/checkout@v4
+        with:
+          repository: seum8660/school_bible
+          path: _school_bible
+          fetch-depth: 1
+          sparse-checkout: |
+            vault
+            manuals/manifest.json
+            molit-faq
+            wf_boards.js
+            /*.html
+          sparse-checkout-cone-mode: false
+
+      - name: 바뀐 것이 있는지 확인
+        id: check
+        run: |
+          NEW=$(git -C _school_bible rev-parse --short HEAD)
+          OLD=$(python3 -c "import json;print(json.load(open('data/meta.json')).get('school_bible',''))" 2>/dev/null || echo none)
+          echo "new=$NEW" >> $GITHUB_OUTPUT
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$NEW" = "$OLD" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT; echo "치트키 변경 없음 ($NEW) — 건너뜀"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT; echo "치트키 $OLD → $NEW"
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.check.outputs.skip == 'false'
+        with: { python-version: '3.12' }
+
+      - uses: actions/setup-node@v4
+        if: steps.check.outputs.skip == 'false'
+        with: { node-version: '20', cache: npm }
+
+      - name: 패키지 설치
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          pip install -q beautifulsoup4 lxml markdownify
+          npm ci
+
+      - name: 치트키 책 원고 다시 나누기 (book_src/에 책 HTML이 있을 때만)
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          SRC=$(ls book_src/*.html 2>/dev/null | sort | tail -1 || true)
+          if [ -n "$SRC" ]; then
+            echo "책 원본: $SRC"
+            rm -f book/[0-9][0-9][0-9]_*.md
+            python -I scripts/split_book.py "$SRC" book
+          else
+            echo "book_src/ 에 책 HTML 없음 — 기존 book/ 원고 사용"
+          fi
+
+      - name: 색인 만들기
+        if: steps.check.outputs.skip == 'false'
+        run: python -I scripts/build_index.py _school_bible
+
+      - name: 도구 호출 시험 (실패하면 배포하지 않음)
+        if: steps.check.outputs.skip == 'false'
+        run: node test/smoke.mjs
+
+      - name: 색인 저장(커밋)
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          git config user.name  "cheatkey-bot"
+          git config user.email "cheatkey-bot@users.noreply.github.com"
+          git add data book
+          if git diff --cached --quiet -- data/docs.json data/qa.json.gz book; then
+            echo "색인 내용 변화 없음"; git reset -q
+            echo "CHANGED=false" >> $GITHUB_ENV
+          else
+            git commit -qm "색인 자동갱신: 치트키 ${{ steps.check.outputs.new }}"
+            git pull -q --rebase && git push -q
+            echo "CHANGED=true" >> $GITHUB_ENV
+          fi
+
+      - name: flyctl 준비
+        if: steps.check.outputs.skip == 'false' && (env.CHANGED == 'true' || github.event_name == 'push' || inputs.force)
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Fly.io 앱 준비·비밀 경로 반영·배포
+        if: steps.check.outputs.skip == 'false' && (env.CHANGED == 'true' || github.event_name == 'push' || inputs.force)
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          MCP_PATH: ${{ secrets.MCP_PATH }}
+        run: |
+          APP=$(grep '^app' fly.toml | cut -d'"' -f2)
+          flyctl status -a "$APP" >/dev/null 2>&1 || flyctl apps create "$APP"
+          if [ -n "$MCP_PATH" ]; then flyctl secrets set MCP_PATH="$MCP_PATH" -a "$APP" --stage; fi
+          flyctl deploy --remote-only -a "$APP"
+          echo "DEPLOYED=true" >> $GITHUB_ENV
+
+      - name: 결과 요약
+        if: always()
+        run: |
+          {
+            echo "## 전남시설 MCP 색인갱신"
+            echo "- 치트키 커밋: \`${{ steps.check.outputs.new }}\`"
+            echo "- 건너뜀: ${{ steps.check.outputs.skip }} · 색인 변경: ${CHANGED:-해당 없음} · 배포: ${DEPLOYED:-안 함}"
+            [ -f data/meta.json ] && echo '```' && cat data/meta.json && echo '```'
+          } >> $GITHUB_STEP_SUMMARY
