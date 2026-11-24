@@ -9,8 +9,8 @@ console.log("도구:", tools.map((t) => t.name).join(", "));
 const cases = [
   ["list_cheatkey_sections", {}],
   ["ask_cheatkey", { question: "착공 서류가 들어왔는데 뭘 확인해야 해?" }],
-  ["search_cheatkey", { query: "BF 인증 대상", kind: "book" }],
-  ["get_cheatkey_doc", { id: "book/k42", section: "처음 맡았다면" }],
+  ["search_cheatkey", { query: "BF 인증", kind: "manual" }],
+  ["get_cheatkey_doc", { id: "task/가설건축물" }],
   ["get_workflow", { name: "준공검사" }],
   ["find_tool", { task: "지연배상금 계산" }],
   ["search_qa", { query: "방수공사 하자담보책임기간" }],

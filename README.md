@@ -7,7 +7,6 @@ Claude가 직접 검색·조회하도록 해 주는 MCP 서버입니다. 만든 
 
 | 종류 | 건수 | 원본 |
 |---|---|---|
-| 치트키 책 | 153 | `book/` (2026.11.13 판, 장별 .md) |
 | 매뉴얼·지침 요약 | 59 | `vault/매뉴얼` + `manuals/manifest.json`(원문 PDF) |
 | 업무 · 단계 | 48 · 7 | `vault/업무`, `vault/단계` |
 | 세부 워크플로우 | 54 | `vault/워크플로우` |
@@ -62,7 +61,7 @@ GitHub Actions가 색인 생성 → 시험 → Fly.io 배포까지 합니다. �
 
 색인 내용이 실제로 바뀐 경우에만 커밋·배포합니다. 시험(test/smoke.mjs)에 실패하면 배포하지 않습니다.
 
-**책을 고쳤을 때**: 새 책 HTML을 `book_src/`에 올려 커밋하면 원고(`book/`)를 다시 나눈 뒤 배포합니다.
+**치트키 책 원고**: 2026-11-24 저장소에서 내림(책 본문 외부 공개 방지). `book/`은 비워 둠.
 
 ## 3. 내 PC(Claude Desktop)에서 쓰기 — 선택
 
@@ -87,7 +86,7 @@ scripts/dump_boards.mjs  wf_boards.js → JSON (앞부분 잘린 중복 블록 �
 scripts/book_loader.py   book/*.md 읽기
 scripts/split_book.py    책 HTML → book/ 장별 .md
 data/                    docs.json · qa.json.gz · meta.json
-book/                    치트키 책 원고 153건
+book/                    (비어 있음 — 책 원고는 공개하지 않음)
 book_src/                새 책 HTML을 넣는 곳(자동 분할)
 test/smoke.mjs           도구 8종 호출 시험
 Dockerfile · fly.toml    Fly.io 배포
